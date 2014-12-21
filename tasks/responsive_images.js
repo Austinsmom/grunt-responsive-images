@@ -419,6 +419,10 @@ module.exports = function(grunt) {
                   } else {
                     sizingMethod = '!';
                   }
+                } 
+                
+                if (!sizeOptions.upscale) {
+                  sizingMethod = '\>';
                 }
                 
                 if (sizeOptions.filter) {
@@ -428,6 +432,11 @@ module.exports = function(grunt) {
                 image
                   .resize(sizeOptions.width, sizeOptions.height, sizingMethod)
                   .quality(sizeOptions.quality);
+                  
+                if(sizeOptions.label) {
+                  image
+                    .drawText(20,20, sizeOptions.label);
+                 }
 
                 if (mode === 'crop') {
                   image
