@@ -1,24 +1,22 @@
 {
-  "name": "grunt-responsive-images",
+  "name": "grunt-responsive-images-sbcustom",
   "description": "Produce images at different sizes for responsive websites.",
-  "version": "0.1.5",
-  "homepage": "https://github.com/andismith/grunt-responsive-images",
+  "version": "0.0.2",
+  "homepage": "https://github.com/hamsterbacke23/grunt-responsive-images",
   "author": {
-    "name": "andismith",
-    "email": "andi.smith.uk@gmail.com",
-    "url": "http://www.andismith.com"
+    "name": "tobiasschmidt"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/andismith/grunt-responsive-images.git"
+    "url": "git://github.com/hamsterbacke23/grunt-responsive-images"
   },
   "bugs": {
-    "url": "https://github.com/andismith/grunt-responsive-images/issues"
+    "url": "https://github.com/hamsterbacke23/grunt-responsive-images/issues"
   },
   "licenses": [
     {
       "type": "MIT",
-      "url": "https://github.com/andismith/grunt-responsive-images/blob/master/LICENSE-MIT"
+      "url": "https://github.com/hamsterbacke23/grunt-responsive-images/blob/master/LICENSE-MIT"
     }
   ],
   "main": "Gruntfile.js",
