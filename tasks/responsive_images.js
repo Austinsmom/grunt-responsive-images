@@ -330,11 +330,6 @@ module.exports = function(grunt) {
           sizingMethod = '\>';
         }
 
-        if(sizeOptions.label) {
-          image
-            .drawText(20,20, sizeOptions.label);
-        }
-
         if (sizeOptions.width > size.width || sizeOptions.height > size.height) {
           if (sizeOptions.upscale) {
           // upscale
@@ -366,6 +361,11 @@ module.exports = function(grunt) {
           .crop(sizeOptions.width, sizeOptions.height, 0, 0);
         }
 
+
+        if(sizeOptions.label) {
+          image
+            .drawText(20,20, sizeOptions.label);
+        }
 
 
         image.write(dstPath, function (error) {
