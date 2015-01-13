@@ -1,5 +1,5 @@
-<<<<<<< ours
-Customized Version of grunt-responsive-images
+
+Customized Version of grunt-responsive-images (dont use me)
 =======
 # grunt-responsive-images [![NPM version](https://badge.fury.io/js/grunt-responsive-images.png)](http://badge.fury.io/js/grunt-responsive-images)
 
@@ -407,4 +407,4 @@ Please let us know if your live site or library uses Grunt Responsive Images. We
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
 
 Thanks to [all the contributors](https://github.com/andismith/grunt-responsive-images/graphs/contributors) who've submitted a pull request; and everyone who's raised issues or contributed to issue resolution.
->>>>>>> theirs
+
