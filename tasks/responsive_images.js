@@ -31,6 +31,10 @@ module.exports = function(grunt) {
     separator: '-',             // separator between name and filesize
     tryAnimated: false,         // DEFAULT CHANGED - whether to try to resize animated files
     upscale: false,             // whether to upscale the image
+    sample: false,
+    customIn: null,
+    customOut: null,
+    sharpen: null,
     sizes: [{
       name: 'small',
       width: 320
@@ -56,8 +60,8 @@ module.exports = function(grunt) {
       brewurl: 'imagemagick',
       url: 'http://www.imagemagick.org/script/binary-releases.php',
       alternative: {
-      code: 'gm',
-      name: 'GraphicsMagick'
+        code: 'gm',
+        name: 'GraphicsMagick'
       }
     },
     gm: {
@@ -65,8 +69,8 @@ module.exports = function(grunt) {
       brewurl: 'graphicsmagick',
       url: 'http://www.graphicsmagick.org/download.html',
       alternative: {
-      code: 'im',
-      name: 'ImageMagick'
+        code: 'im',
+        name: 'ImageMagick'
       }
     }
   };
@@ -276,7 +280,7 @@ module.exports = function(grunt) {
   var isAnimatedGif = function(data, dstPath, tryAnimated) {
     // GIF87 cannot be animated.
     // data.Delay and Scene can identify an animation GIF
-    if (!tryAnimated && data.format.toUpperCase() === 'GIF' && data.Delay && data.Scene) {
+    if (!tryAnimated && data && data.format && data.format.toUpperCase() === 'GIF' && data.Delay && data.Scene) {
       grunt.verbose.warn(dstPath + ' is animated - skipping');
       return true;
     }
@@ -310,7 +314,22 @@ module.exports = function(grunt) {
   var processImage = function(srcPath, dstPath, sizeOptions, tally, callback) {
     var image = gfxEngine(srcPath);
 
-    image.identify(function(err, data) {
+    image.identify("%m:%T:%s\n", function(err, dataRaw) {
+      if(err){
+        handleImageErrors(err, sizeOptions.engine);
+      }
+
+      var lastLineData = dataRaw.trim().split("\n").slice(-1)[0].split(":");
+      if (lastLineData.length !== 3) {
+        handleImageErrors(new Error("Could not parse identify output: " + dataRaw), sizeOptions.engine);
+      }
+
+      var data = {
+        format: lastLineData[0],
+        Delay: parseInt(lastLineData[1], 10),
+        Scene: parseInt(lastLineData[2], 10)
+      };
+
       if (!isAnimatedGif(data, dstPath, sizeOptions.tryAnimated)) {
       image.size(function(error, size) {
         var sizingMethod = '';
@@ -346,14 +365,26 @@ module.exports = function(grunt) {
           }
         }
 
+        if (sizeOptions.customIn) {
+          image.in(sizeOptions.customIn);
+        }
+        if (sizeOptions.customOut) {
+          image.out(sizeOptions.customOut);
+        }
 
         if (sizeOptions.filter) {
           image.filter(sizeOptions.filter);
         }
 
-        image
-          .resize(sizeOptions.width, sizeOptions.height, sizingMethod)
-          .quality(sizeOptions.quality);
+        if (sizeOptions.sample) {
+          image
+            .sample(sizeOptions.width, sizeOptions.height, sizingMethod)
+            .quality(sizeOptions.quality);
+        } else {
+          image
+            .resize(sizeOptions.width, sizeOptions.height, sizingMethod)
+            .quality(sizeOptions.quality);
+        }
 
         if (mode === 'crop') {
           image
@@ -361,12 +392,15 @@ module.exports = function(grunt) {
           .crop(sizeOptions.width, sizeOptions.height, 0, 0);
         }
 
-
         if(sizeOptions.label) {
           image
             .drawText(20,20, sizeOptions.label);
         }
 
+        if (sizeOptions.sharpen) {
+          image
+            .sharpen(sizeOptions.sharpen.radius, sizeOptions.sharpen.sigma);
+        }
 
         image.write(dstPath, function (error) {
           if (error) {
@@ -403,7 +437,7 @@ module.exports = function(grunt) {
       extName = '';
 
     extName = path.extname(dstPath);
-    baseName = path.basename(srcPath, extName); // filename without extension
+    baseName = path.basename(dstPath, extName); // filename without extension
 
     if (customDest) {
 
@@ -466,48 +500,47 @@ module.exports = function(grunt) {
         return grunt.log.warn('Unable to compile; no valid source files were found.');
       } else {
 
-      // Iterate over all specified file groups.
-      task.files.forEach(function(f) {
+        // Iterate over all specified file groups.
+        task.files.forEach(function(f) {
 
-        var srcPath = '',
-          dstPath = '';
+          var srcPath = '',
+            dstPath = '';
 
-        checkForValidTarget(f);
-        checkForSingleSource(f);
+          checkForValidTarget(f);
+          checkForSingleSource(f);
 
-        // create a name for our image based on name, width, height
-        sizeOptions.name = getName({ name: sizeOptions.name, width: sizeOptions.width, height: sizeOptions.height }, options);
+          // create a name for our image based on name, width, height
+          sizeOptions.name = getName({ name: sizeOptions.name, width: sizeOptions.width, height: sizeOptions.height }, options);
 
-        // create an output name with prefix, suffix
-        sizeOptions.outputName = addPrefixSuffix(sizeOptions.name, sizeOptions.separator, sizeOptions.suffix, sizeOptions.rename);
+          // create an output name with prefix, suffix
+          sizeOptions.outputName = addPrefixSuffix(sizeOptions.name, sizeOptions.separator, sizeOptions.suffix, sizeOptions.rename);
 
-        srcPath = f.src[0];
-        dstPath = getDestination(srcPath, f.dest, sizeOptions, f.custom_dest, f.orig.cwd);
+          srcPath = f.src[0];
+          dstPath = getDestination(srcPath, f.dest, sizeOptions, f.custom_dest, f.orig.cwd);
 
-        // remove pixels from the value so the gfx process doesn't complain
-        sizeOptions = removeCharsFromObjectValue(sizeOptions, ['width', 'height'], 'px');
+          // remove pixels from the value so the gfx process doesn't complain
+          sizeOptions = removeCharsFromObjectValue(sizeOptions, ['width', 'height'], 'px');
+
+          series.push(function(callback) {
+
+            if (sizeOptions.newFilesOnly) {
+              if (isFileNewVersion(srcPath, dstPath)) {
+                return processImage(srcPath, dstPath, sizeOptions, tally, callback);
+              } else {
+                grunt.verbose.ok('File already exists: ' + dstPath);
+                return callback();
+              }
+            } else {
+              return processImage(srcPath, dstPath, sizeOptions, tally, callback);
+            }
+
+          });
+        });
 
         series.push(function(callback) {
-
-          if (sizeOptions.newFilesOnly) {
-            if (isFileNewVersion(srcPath, dstPath)) {
-              return processImage(srcPath, dstPath, sizeOptions, tally, callback);
-            } else {
-              grunt.verbose.ok('File already exists: ' + dstPath);
-              return callback();
-            }
-          } else {
-            return processImage(srcPath, dstPath, sizeOptions, tally, callback);
-          }
-
+          outputResult(tally[sizeOptions.id], sizeOptions.name);
+          return callback();
         });
-      });
-
-      series.push(function(callback) {
-        outputResult(tally[sizeOptions.id], sizeOptions.name);
-        return callback();
-      });
-
       }
     });
 
