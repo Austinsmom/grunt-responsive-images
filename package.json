@@ -1,7 +1,7 @@
 {
   "name": "grunt-responsive-images-sbcustom",
   "description": "Produce images at different sizes for responsive websites.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "homepage": "https://github.com/hamsterbacke23/grunt-responsive-images",
   "author": {
     "name": "tobiasschmidt"
